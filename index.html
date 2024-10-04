@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Carbon Wallet 1.0.0-beta1</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #1a202c;
+            color: #e2e8f0;
+        }
+        .wallet-container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        .custom-alert {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            animation: fadeIn 0.3s ease-out;
+        }
+        .custom-alert-content {
+            background-color: #2d3748;
+            border-radius: 0.5rem;
+            padding: 1.5rem;
+            max-width: 90%;
+            width: 400px;
+            animation: slideIn 0.3s ease-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        @keyframes slideIn {
+            from { transform: translateY(-50px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+    </style>
+</head>
+<body class="bg-gray-900 text-gray-100">
+    <div class="container mx-auto p-4 wallet-container">
+        <div class="flex justify-center"><img src="https://i.imgur.com/MLd3RO0.png" class="h-24 mt-8"></div>
+        
+        <div id="wallet-menu" class="mb-8 text-center">
+            <button id="show-wallet-options" class="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-lg transition duration-300 ease-in-out transform hover:scale-105">Wallet Options</button>
+        </div>
+
+        <div id="wallet-options" class="mb-8 hidden">
+            <div class="flex justify-center space-x-4 mb-4">
+                <button id="create-wallet" class="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-lg transition duration-300 ease-in-out transform hover:scale-105">Create New Wallet</button>
+                <button id="load-wallet" class="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg transition duration-300 ease-in-out transform hover:scale-105">Load Wallet</button>
+            </div>
+        </div>
+        
+        <div id="wallet-info" class="mb-8 bg-gray-800 p-4 rounded-lg shadow-lg hidden">
+            <div id="balance-info"></div>
+            <button id="refresh-balance" class="mt-4 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg transition duration-300 ease-in-out">Refresh Balance</button>
+        </div>
+        
+        <div id="wallet-input" class="mb-8 hidden">
+            <input id="wallet-address" type="text" placeholder="Enter wallet address" class="w-full bg-gray-700 border border-gray-600 p-3 rounded-lg mb-4 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+            <input id="private-key" type="password" placeholder="Enter private key" class="w-full bg-gray-700 border border-gray-600 p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
+            <button id="submit-wallet-load" class="mt-4 w-full bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg transition duration-300 ease-in-out">Load Wallet</button>
+        </div>
+        
+        <div id="transfer-form" class="mb-8 hidden">
+            <h2 class="text-2xl font-bold mb-4">Transfer Funds</h2>
+            <input id="receiver" type="text" placeholder="Receiver address" class="w-full bg-gray-700 border border-gray-600 p-3 rounded-lg mb-4 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+            <div class="flex space-x-4 mb-4">
+                <input id="amount" type="number" placeholder="Amount" class="flex-1 bg-gray-700 border border-gray-600 p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                <select id="currency" class="flex-1 bg-gray-700 border border-gray-600 p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    <option value="XPL">XPL</option>
+                    <option value="XRS">XRS</option>
+                </select>
+            </div>
+            <button id="transfer" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-lg transition duration-300 ease-in-out transform hover:scale-105">Transfer</button>
+        </div>
+        
+        <div id="transactions"></div>
+    </div>
+
+    <!-- Custom Alert Modal -->
+    <div id="custom-alert" class="custom-alert flex items-center justify-center">
+        <div class="custom-alert-content">
+            <h2 id="alert-title" class="text-xl font-bold mb-4"></h2>
+            <p id="alert-message" class="mb-4"></p>
+            <div id="alert-buttons" class="flex justify-end space-x-4">
+                <button id="alert-cancel" class="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded">Cancel</button>
+                <button id="alert-ok" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded">OK</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/js-cookie@3.0.1/dist/js.cookie.min.js"></script>
+    <script>
+        class WalletApp {
+            constructor() {
+                this.walletAddress = '';
+                this.privateKey = '';
+                this.balanceUpdateInterval = null;
+
+                this.initializeElements();
+                this.addEventListeners();
+            }
+
+            initializeElements() {
+                this.elements = {
+                    walletMenu: document.getElementById('wallet-menu'),
+                    walletOptions: document.getElementById('wallet-options'),
+                    walletInfo: document.getElementById('wallet-info'),
+                    balanceInfo: document.getElementById('balance-info'),
+                    createWalletBtn: document.getElementById('create-wallet'),
+                    loadWalletBtn: document.getElementById('load-wallet'),
+                    walletInput: document.getElementById('wallet-input'),
+                    walletAddressInput: document.getElementById('wallet-address'),
+                    privateKeyInput: document.getElementById('private-key'),
+                    submitWalletLoadBtn: document.getElementById('submit-wallet-load'),
+                    transferForm: document.getElementById('transfer-form'),
+                    receiverInput: document.getElementById('receiver'),
+                    amountInput: document.getElementById('amount'),
+                    currencySelect: document.getElementById('currency'),
+                    transferBtn: document.getElementById('transfer'),
+                    transactionsDiv: document.getElementById('transactions'),
+                    refreshBalanceBtn: document.getElementById('refresh-balance'),
+                    showWalletOptionsBtn: document.getElementById('show-wallet-options'),
+                };
+            }
+
+            addEventListeners() {
+                this.elements.showWalletOptionsBtn.addEventListener('click', () => this.elements.walletOptions.classList.toggle('hidden'));
+                this.elements.createWalletBtn.addEventListener('click', () => this.createWallet());
+                this.elements.loadWalletBtn.addEventListener('click', () => this.showWalletInput());
+                this.elements.submitWalletLoadBtn.addEventListener('click', () => this.loadWallet());
+                this.elements.transferBtn.addEventListener('click', () => this.transfer());
+                this.elements.refreshBalanceBtn.addEventListener('click', () => this.refreshBalance());
+            }
+
+            async showCustomAlert(title, message, showCancel = false) {
+                return new Promise((resolve) => {
+                    const customAlert = document.getElementById('custom-alert');
+                    const alertTitle = document.getElementById('alert-title');
+                    const alertMessage = document.getElementById('alert-message');
+                    const alertOk = document.getElementById('alert-ok');
+                    const alertCancel = document.getElementById('alert-cancel');
+
+                    alertTitle.textContent = title;
+                    alertMessage.textContent = message;
+                    alertCancel.style.display = showCancel ? 'block' : 'none';
+                    customAlert.style.display = 'flex';
+
+                    alertOk.onclick = () => {
+                        customAlert.style.display = 'none';
+                        resolve(true);
+                    };
+                    alertCancel.onclick = () => {
+                        customAlert.style.display = 'none';
+                        resolve(false);
+                    };
+                });
+            }
+
+            async createWallet() {
+                if (this.walletAddress) {
+                    const confirmCreate = await this.showCustomAlert('Create New Wallet', 'You already have a wallet. Creating a new one will abandon the current wallet. Are you sure you want to continue?', true);
+                    if (!confirmCreate) return;
+                }
+
+                try {
+                    const wallet = await window.wallet.create();
+                    const confirmPrivateKey = await this.showCustomAlert('New Wallet Created', `Your new wallet has been created. Please store your private key in a safe place:\n\n${wallet.privateKey}\n\nHave you securely stored your private key?`, true);
+                    
+                    if (confirmPrivateKey) {
+                        this.setWallet(wallet.address, wallet.privateKey);
+                        this.updateWalletInfo(wallet);
+                        this.showTransferForm();
+                        this.startBalanceUpdates();
+                    } else {
+                        await this.showCustomAlert('Warning', 'Please make sure to store your private key securely before continuing.');
+                    }
+                } catch (error) {
+                    console.error('Error creating wallet:', error);
+                    await this.showCustomAlert('Error', 'Failed to create wallet: ' + error.message);
+                }
+            }
+
+            showWalletInput() {
+                this.elements.walletInput.classList.remove('hidden');
+                this.elements.walletAddressInput.focus();
+            }
+
+            async loadWallet() {
+                const address = this.elements.walletAddressInput.value;
+                const privateKey = this.elements.privateKeyInput.value;
+                
+                if (!address || !privateKey) {
+                    await this.showCustomAlert('Error', 'Please enter both wallet address and private key.');
+                    return;
+                }
+
+                try {
+                    const wallet = await window.wallet.get(address);
+                    if (wallet) {
+                        this.setWallet(address, privateKey);
+                        this.updateWalletInfo(wallet);
+                        this.showTransferForm();
+                        this.loadTransactions();
+                        this.elements.walletInput.classList.add('hidden');
+                        this.startBalanceUpdates();
+                    } else {
+                        await this.showCustomAlert('Error', 'Wallet not found or invalid credentials.');
+                    }
+                } catch (error) {
+                    console.error('Error loading wallet:', error);
+                    await this.showCustomAlert('Error', 'Failed to load wallet: ' + error.message);
+                }
+            }
+
+            setWallet(address, privateKey) {
+                this.walletAddress = address;
+                this.privateKey = privateKey;
+                Cookies.set('walletAddress', address, { expires: 7 });
+                Cookies.set('privateKey', privateKey, { expires: 7 });
+            }
+
+            updateWalletInfo(wallet) {
+                this.elements.balanceInfo.innerHTML = `
+                    <p class="mb-2"><span class="font-semibold">Address:</span> <code>${wallet.address}</code></p>
+                    <p class="mb-2"><span class="font-semibold">XPL Balance:</span> ${wallet.xpl}</p>
+                    <p><span class="font-semibold">XRS Balance:</span> ${wallet.xrs}</p>
+                `;
+                this.elements.walletInfo.classList.remove('hidden');
+            }
+
+            showTransferForm() {
+                this.elements.transferForm.classList.remove('hidden');
+            }
+
+            async transfer() {
+                const transferData = {
+                    receiverId: this.elements.receiverInput.value,
+                    amount: parseInt(this.elements.amountInput.value),
+                    currency: this.elements.currencySelect.value
+                };
+
+                try {
+                    const result = await window.wallet.transfer(transferData);
+                    await this.showCustomAlert('Success', result.message);
+                    await this.refreshBalance();
+                    this.loadTransactions();
+                } catch (error) {
+                    console.error('Error transferring funds:', error);
+                    await this.showCustomAlert('Error', 'Transfer failed: ' + error.message);
+                }
+            }
+
+            async loadTransactions() {
+                try {
+                    const transactions = await window.wallet.getTransactions(this.walletAddress);
+                    const transactionsHtml = transactions.map(t => `
+                        <div class="bg-gray-800 p-4 mb-4 rounded-lg shadow">
+                            <p><span class="font-bold">From:</span> ${t.senderId}</p>
+                            <p><span class="font-bold">To:</span> ${t.receiverId}</p>
+                            <p><span class="font-bold">Amount:</span> ${t.amount} ${t.currency}</p>
+                            <p><span class="font-bold">Date:</span> ${new Date(t.timestamp).toLocaleString()}</p>
+                        </div>
+                    `).join('');
+                    this.elements.transactionsDiv.innerHTML = `
+                        <h2 class="text-2xl font-bold mb-4">Recent Transactions</h2>
+                        ${transactionsHtml}
+                    `;
+                } catch (error) {
+                    console.error('Error loading transactions:', error);
+                    await this.showCustomAlert('Error', 'Failed to load transactions: ' + error.message);
+                }
+            }
+
+            async refreshBalance() {
+                try {
+                    const wallet = await window.wallet.get(this.walletAddress);
+                    this.updateWalletInfo(wallet);
+                } catch (error) {
+                    console.error('Error refreshing balance:', error);
+                    await this.showCustomAlert('Error', 'Failed to refresh balance: ' + error.message);}
+            }
+
+            startBalanceUpdates() {
+                if (this.balanceUpdateInterval) {
+                    clearInterval(this.balanceUpdateInterval);
+                }
+                this.balanceUpdateInterval = setInterval(() => this.refreshBalance(), 30000); // Update every 5 seconds
+            }
+
+            stopBalanceUpdates() {
+                if (this.balanceUpdateInterval) {
+                    clearInterval(this.balanceUpdateInterval);
+                    this.balanceUpdateInterval = null;
+                }
+            }
+
+            async initialize() {
+                const savedAddress = Cookies.get('walletAddress');
+                const savedPrivateKey = Cookies.get('privateKey');
+                if (savedAddress && savedPrivateKey) {
+                    this.elements.walletAddressInput.value = savedAddress;
+                    this.elements.privateKeyInput.value = savedPrivateKey;
+                    await this.loadWallet();
+                }
+            }
+        }
+
+        // Initialize the wallet application
+        const walletApp = new WalletApp();
+        document.addEventListener('DOMContentLoaded', () => walletApp.initialize());
+    </script>
+</body>
+</html>
