@@ -20,8 +20,7 @@
   },
   "devDependencies": {
     "electron": "^32.1.2",
-    "electron-builder": "^24.13.3",
-    "dmg-license": "^1.0.11"
+    "electron-builder": "^24.13.3"
   },
   "build": {
     "appId": "com.carbon.wallet",
