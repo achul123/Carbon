@@ -243,6 +243,8 @@
 
             async transfer() {
                 const transferData = {
+                    senderAddress: this.walletAddress,
+                    privateKey: this.privateKey,
                     receiverId: this.elements.receiverInput.value,
                     amount: parseInt(this.elements.amountInput.value),
                     currency: this.elements.currencySelect.value
