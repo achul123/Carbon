@@ -40,7 +40,11 @@ You should probably download a packaged version of the app instead. See more on 
 
 4. Start the application:
    ```
-   npx electron .
+   npm run start
+   ```
+5. Build the application:
+   ```
+   npm run build
    ```
 
 ## Security Notes
