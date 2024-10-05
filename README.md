@@ -1,6 +1,6 @@
-# Carbon Wallet
+# Ryuusei Wallet
 
-Carbon Wallet is a desktop application for managing and transacting with the XPL and XRS cryptocurrencies on the PlutoCoins network. Carbon has a user-friendly interface for creating wallets, checking balances, and transferring funds.
+Ryuusei Wallet is a desktop application for managing and transacting with the XPL and XRS cryptocurrencies on the PlutoCoins network. Carbon has a user-friendly interface for creating wallets, checking balances, and transferring funds.
 
 ## Features
 
@@ -25,7 +25,7 @@ You should probably download a packaged version of the app instead. See more on 
 
 1. Clone the repository:
    ```
-   git clone https://github.com/Carbon-Wallet/Carbon.git
+   git clone https://github.com/achul123/Ryuusei-Wallet/Carbon.git
    ```
 
 2. Navigate to the project directory:
@@ -62,7 +62,7 @@ Carbon Wallet interacts with the PlutoNodes API. The application uses the follow
 
 ## Contributing
 
-Contributions to Carbon Wallet are welcome. Please feel free to submit a Pull Request.
+Contributions to Ryuusei Wallet are welcome. Please feel free to submit a Pull Request.
 
 ## License
 
