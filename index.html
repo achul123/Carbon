@@ -41,12 +41,36 @@
             from { transform: translateY(-50px); opacity: 0; }
             to { transform: translateY(0); opacity: 1; }
         }
+        .settings-popup {
+            position: fixed;
+            top: 0;
+            right: 0;
+            width: 300px;
+            height: 100%;
+            background-color: #2d3748;
+            padding: 2rem;
+            z-index: 1000;
+            animation: slideInRight 0.3s ease-out;
+        }
+        @keyframes slideInRight {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
     </style>
 </head>
 <body class="bg-gray-900 text-gray-100">
+    <div class="relative">
+        <div class="absolute top-0 right-0 flex justify-between items-center">
+            <button id="settings-btn" class="text-white p-2">
+                <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" stroke="gray"></path>
+                </svg>                
+            </button>
+        </div>
+    </div>
+    
     <div class="container mx-auto p-4 wallet-container">
-        <div class="flex justify-center"><img src="https://i.imgur.com/MLd3RO0.png" loading="lazy" class="h-24 mt-8"></div>
-        
+        <div class="flex justify-center"><img src="https://i.imgur.com/0RGXFVc.png" loading="lazy" class="h-24"></div>
         <div id="wallet-menu" class="mb-8 text-center">
             <button id="show-wallet-options" class="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-lg transition duration-300 ease-in-out transform hover:scale-105">Wallet Options</button>
         </div>
@@ -57,18 +81,21 @@
                 <button id="load-wallet" class="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg transition duration-300 ease-in-out transform hover:scale-105">Load Wallet</button>
             </div>
         </div>
-        
+
         <div id="wallet-info" class="mb-8 bg-gray-800 p-4 rounded-lg shadow-lg hidden">
             <div id="balance-info"></div>
             <button id="refresh-balance" class="mt-4 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg transition duration-300 ease-in-out">Refresh Balance</button>
         </div>
-        
+
         <div id="wallet-input" class="mb-8 hidden">
             <input id="wallet-address" type="text" placeholder="Enter wallet address" class="w-full bg-gray-700 border border-gray-600 p-3 rounded-lg mb-4 focus:outline-none focus:ring-2 focus:ring-indigo-500">
-            <input id="private-key" type="password" placeholder="Enter private key" class="w-full bg-gray-700 border border-gray-600 p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
+            <div class="flex items-center">
+                <input id="private-key" type="password" placeholder="Enter private key" class="w-full bg-gray-700 border border-gray-600 p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                <button id="toggle-password" class="ml-2 bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded">Show</button>
+            </div>
             <button id="submit-wallet-load" class="mt-4 w-full bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg transition duration-300 ease-in-out">Load Wallet</button>
         </div>
-        
+
         <div id="transfer-form" class="mb-8 hidden">
             <h2 class="text-2xl font-bold mb-4">Transfer Funds</h2>
             <input id="receiver" type="text" placeholder="Receiver address" class="w-full bg-gray-700 border border-gray-600 p-3 rounded-lg mb-4 focus:outline-none focus:ring-2 focus:ring-indigo-500">
@@ -81,7 +108,7 @@
             </div>
             <button id="transfer" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-lg transition duration-300 ease-in-out transform hover:scale-105">Transfer</button>
         </div>
-        
+
         <div id="transactions"></div>
     </div>
 
@@ -95,6 +122,29 @@
                 <button id="alert-ok" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded">OK</button>
             </div>
         </div>
+    </div>
+
+    <!-- Loading Spinner -->
+    <div id="loading-spinner" class="hidden fixed inset-0 flex items-center justify-center bg-gray-900 bg-opacity-50">
+        <div class="border-t-4 border-indigo-500 border-solid rounded-full h-12 w-12 animate-spin"></div>
+    </div>
+
+    <!-- Notification -->
+    <div id="notification" class="fixed top-4 right-4 bg-green-500 text-white p-4 rounded shadow hidden">
+        <p id="notification-message"></p>
+    </div>
+
+    <!-- Settings Popup -->
+    <div id="settings-popup" class="settings-popup hidden">
+        <h2 class="text-2xl font-bold mb-4">Settings</h2>
+        <div class="mb-4">
+            <label class="block text-gray-300">Theme</label>
+            <select id="theme-select" class="w-full bg-gray-700 border border-gray-600 p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                <option value="dark">Dark</option>
+                <option value="light">Light</option>
+            </select>
+        </div>
+        <button id="close-settings" class="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded">Close</button>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/js-cookie@3.0.1/dist/js.cookie.min.js"></script>
@@ -129,6 +179,14 @@
                     transactionsDiv: document.getElementById('transactions'),
                     refreshBalanceBtn: document.getElementById('refresh-balance'),
                     showWalletOptionsBtn: document.getElementById('show-wallet-options'),
+                    loadingSpinner: document.getElementById('loading-spinner'),
+                    notification: document.getElementById('notification'),
+                    notificationMessage: document.getElementById('notification-message'),
+                    togglePasswordBtn: document.getElementById('toggle-password'),
+                    settingsBtn: document.getElementById('settings-btn'),
+                    settingsPopup: document.getElementById('settings-popup'),
+                    closeSettingsBtn: document.getElementById('close-settings'),
+                    themeSelect: document.getElementById('theme-select'),
                 };
             }
 
@@ -139,6 +197,46 @@
                 this.elements.submitWalletLoadBtn.addEventListener('click', () => this.loadWallet());
                 this.elements.transferBtn.addEventListener('click', () => this.transfer());
                 this.elements.refreshBalanceBtn.addEventListener('click', () => this.refreshBalance());
+                this.elements.togglePasswordBtn.addEventListener('click', () => this.togglePasswordVisibility());
+                this.elements.settingsBtn.addEventListener('click', () => this.toggleSettingsPopup());
+                this.elements.closeSettingsBtn.addEventListener('click', () => this.toggleSettingsPopup());
+                this.elements.themeSelect.addEventListener('change', () => this.changeTheme());
+            }
+
+            showLoadingSpinner() {
+                this.elements.loadingSpinner.classList.remove('hidden');
+            }
+
+            hideLoadingSpinner() {
+                this.elements.loadingSpinner.classList.add('hidden');
+            }
+
+            showNotification(message, type = 'success') {
+                this.elements.notificationMessage.textContent = message;
+                this.elements.notification.classList.remove('hidden');
+                this.elements.notification.classList.remove('bg-green-500', 'bg-red-500');
+                this.elements.notification.classList.add(type === 'success' ? 'bg-green-500' : 'bg-red-500');
+                setTimeout(() => this.elements.notification.classList.add('hidden'), 3000);
+            }
+
+            togglePasswordVisibility() {
+                const type = this.elements.privateKeyInput.getAttribute('type') === 'password' ? 'text' : 'password';
+                this.elements.privateKeyInput.setAttribute('type', type);
+                this.elements.togglePasswordBtn.textContent = type === 'password' ? 'Show' : 'Hide';
+            }
+
+            toggleSettingsPopup() {
+                this.elements.settingsPopup.classList.toggle('hidden');
+            }
+
+            changeTheme() {
+                const selectedTheme = this.elements.themeSelect.value;
+                document.body.classList.remove('bg-gray-900', 'text-gray-100', 'bg-white', 'text-black');
+                if (selectedTheme === 'dark') {
+                    document.body.classList.add('bg-gray-900', 'text-gray-100');
+                } else {
+                    document.body.classList.add('bg-white', 'text-white');
+                }
             }
 
             async showCustomAlert(title, message, showCancel = false) {
@@ -171,21 +269,25 @@
                     if (!confirmCreate) return;
                 }
 
+                this.showLoadingSpinner();
                 try {
                     const wallet = await window.wallet.create();
                     const confirmPrivateKey = await this.showCustomAlert('New Wallet Created', `Your new wallet has been created. Please store your private key in a safe place:\n\n${wallet.privateKey}\n\nHave you securely stored your private key?`, true);
-                    
+
                     if (confirmPrivateKey) {
                         this.setWallet(wallet.address, wallet.privateKey);
                         this.updateWalletInfo(wallet);
                         this.showTransferForm();
                         this.startBalanceUpdates();
+                        this.showNotification('Wallet created successfully!');
                     } else {
                         await this.showCustomAlert('Warning', 'Please make sure to store your private key securely before continuing.');
                     }
                 } catch (error) {
                     console.error('Error creating wallet:', error);
-                    await this.showCustomAlert('Error', 'Failed to create wallet: ' + error.message);
+                    this.showNotification('Failed to create wallet: ' + error.message, 'error');
+                } finally {
+                    this.hideLoadingSpinner();
                 }
             }
 
@@ -197,12 +299,13 @@
             async loadWallet() {
                 const address = this.elements.walletAddressInput.value;
                 const privateKey = this.elements.privateKeyInput.value;
-                
+
                 if (!address || !privateKey) {
-                    await this.showCustomAlert('Error', 'Please enter both wallet address and private key.');
+                    this.showNotification('Please enter both wallet address and private key.', 'error');
                     return;
                 }
 
+                this.showLoadingSpinner();
                 try {
                     const wallet = await window.wallet.get(address);
                     if (wallet) {
@@ -212,12 +315,15 @@
                         this.loadTransactions();
                         this.elements.walletInput.classList.add('hidden');
                         this.startBalanceUpdates();
+                        this.showNotification('Wallet loaded successfully!');
                     } else {
-                        await this.showCustomAlert('Error', 'Wallet not found or invalid credentials.');
+                        this.showNotification('Wallet not found or invalid credentials.', 'error');
                     }
                 } catch (error) {
                     console.error('Error loading wallet:', error);
-                    await this.showCustomAlert('Error', 'Failed to load wallet: ' + error.message);
+                    this.showNotification('Failed to load wallet: ' + error.message, 'error');
+                } finally {
+                    this.hideLoadingSpinner();
                 }
             }
 
@@ -252,14 +358,17 @@
                     currency: this.elements.currencySelect.value
                 };
 
+                this.showLoadingSpinner();
                 try {
                     const result = await window.wallet.transfer(transferData);
-                    await this.showCustomAlert('Success', result.message);
+                    this.showNotification('Transfer successful!');
                     await this.refreshBalance();
                     this.loadTransactions();
                 } catch (error) {
                     console.error('Error transferring funds:', error);
-                    await this.showCustomAlert('Error', 'Transfer failed: ' + error.message);
+                    this.showNotification('Transfer failed: ' + error.message, 'error');
+                } finally {
+                    this.hideLoadingSpinner();
                 }
             }
 
@@ -280,24 +389,28 @@
                     `;
                 } catch (error) {
                     console.error('Error loading transactions:', error);
-                    await this.showCustomAlert('Error', 'Failed to load transactions: ' + error.message);
+                    this.showNotification('Failed to load transactions: ' + error.message, 'error');
                 }
             }
 
             async refreshBalance() {
+                this.showLoadingSpinner();
                 try {
                     const wallet = await window.wallet.get(this.walletAddress);
                     this.updateWalletInfo(wallet);
                 } catch (error) {
                     console.error('Error refreshing balance:', error);
-                    await this.showCustomAlert('Error', 'Failed to refresh balance: ' + error.message);}
+                    this.showNotification('Failed to refresh balance: ' + error.message, 'error');
+                } finally {
+                    this.hideLoadingSpinner();
+                }
             }
 
             startBalanceUpdates() {
                 if (this.balanceUpdateInterval) {
                     clearInterval(this.balanceUpdateInterval);
                 }
-                this.balanceUpdateInterval = setInterval(() => this.refreshBalance(), 30000); // Update every 5 seconds
+                this.balanceUpdateInterval = setInterval(() => this.refreshBalance(), 30000); // Update every 30 seconds
             }
 
             stopBalanceUpdates() {
