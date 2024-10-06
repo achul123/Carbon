@@ -43,6 +43,9 @@ jobs:
         with:
           name: snap-file
           path: dist/Ryuusei_1.0.0_amd64.snap
+    env:
+      GH_TOKEN: ${{ secrets.GH_TOKEN }}
+
   build-windows:
     runs-on: windows-latest
     steps:
@@ -60,5 +63,3 @@ jobs:
           name: Ryuusei-Wallet-win
           path: |
             dist/Ryuusei Wallet Setup 1.0.0.exe
-    env:
-      GH_TOKEN: ${{ secrets.GH_TOKEN }}
