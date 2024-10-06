@@ -6,7 +6,7 @@ on:
       - main
 
 jobs:
-  build:
+  build-macos:
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v2
@@ -17,16 +17,16 @@ jobs:
       - run: npm install
       - run: npm run build
       - run: npm run dist
-      - name: Upload specific artifacts
+      - name: Upload specific macOS artifacts
         uses: actions/upload-artifact@v3
         with:
-          name: Ryuusei-Wallet-arm64-mac # Un nom d'artefact pour l'identification
+          name: Ryuusei-Wallet-arm64-mac
           path: |
             dist/Ryuusei Wallet-1.0.0-arm64-mac.zip
             dist/Ryuusei Wallet-1.0.0-arm64.dmg
             dist/Ryuusei Wallet-1.0.0.AppImage
             dist/Ryuusei_1.0.0_amd64.snap
-      - name: Upload files individually
+      - name: Upload macOS files individually
         uses: actions/upload-artifact@v3
         with:
           name: macos-files
@@ -38,12 +38,27 @@ jobs:
         with:
           name: linux-files
           path: dist/Ryuusei Wallet-1.0.0.AppImage
-           
       - name: Upload Snap file
         uses: actions/upload-artifact@v3
         with:
           name: snap-file
           path: dist/Ryuusei_1.0.0_amd64.snap
+  build-windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set up Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: '16'
+      - run: npm install
+      - run: npm run build
+      - run: npm run dist
+      - name: Upload Windows artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: Ryuusei-Wallet-win
+          path: |
+            dist/Ryuusei Wallet Setup 1.0.0.exe
     env:
       GH_TOKEN: ${{ secrets.GH_TOKEN }}
-
