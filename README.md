@@ -2,6 +2,10 @@
 
 Ryuusei Wallet is a desktop application for managing and transacting with the XPL and XRS cryptocurrencies on the PlutoCoins network. Ryuusei has a user-friendly interface for creating wallets, checking balances, and transferring funds.
 
+## Download
+
+https://github.com/achul123/Ryuusei-Wallet/actions
+
 ## Features
 
 - Create new wallets
