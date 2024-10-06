@@ -22,3 +22,5 @@ jobs:
         with:
           name: electron-app-mac
           path: dist/
+    env:
+      GH_TOKEN: ${{ secrets.GH_TOKEN }} 
