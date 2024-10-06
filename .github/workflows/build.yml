@@ -1,81 +1,24 @@
-name: Build/release Ryuusei Wallet
+name: Build Electron App
 
-on: 
+on:
   push:
-    branches:
-      - main
-  pull_request:
     branches:
       - main
 
 jobs:
-  release:
-    runs-on: ${{ matrix.os }}
-
-    strategy:
-      matrix:
-        os: [macos-latest, windows-latest, ubuntu-latest]
-
+  build:
+    runs-on: macos-latest
     steps:
-      # Check out the repository
-      - name: Check out Git repository
-        uses: actions/checkout@v2
-
-      # Clean node_modules to avoid potential permission issues
-      - name: Clean up node_modules
-        run: rm -rf node_modules
-
-      # Clean NPM cache
-      - name: Clean NPM cache
-        run: npm cache clean --force
-
-      # Set up Node.js environment
-      - name: Set up Node.js
-        uses: actions/setup-node@v2
-        with:
-          node-version: 18
-
-      # Install dependencies
-      - name: Install dependencies
-        run: npm install
-
-      # Install dependencies for Linux
-      - name: Install Linux dependencies
-        if: matrix.os == 'ubuntu-latest'
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y libgtkextra-dev libgconf2-dev libnss3 libasound2 libxtst-dev xauth xvfb
-
-      # Increase NPM timeout to prevent potential timeout issues
-      - name: Increase NPM timeout
-        run: npm config set fetch-retries 5
-
-      # Conditional build for macOS (to prevent dmg errors on Linux/Windows)
-      - name: Build Electron app for macOS
-        if: matrix.os == 'macos-latest'
-        run: npm run build:mac
-
-      # Build Electron app for Windows and Linux
-      - name: Build Electron app for Windows/Linux
-        if: matrix.os != 'macos-latest'
-        run: npm run build:${{ matrix.os == 'windows-latest' && 'win' || 'linux' }}
-
-      # Upload artifacts for release
-      - name: Upload artifact
-        uses: actions/upload-artifact@v2
-        with:
-          name: Ryuusei-Wallet-${{ matrix.os }}
-          path: dist/
-
-      # Optionally publish the release when a tag is pushed
-      - name: Publish release
-        if: startsWith(github.ref, 'refs/tags/')
-        uses: actions/create-release@v1
-        with:
-          tag_name: ${{ github.ref }}
-          release_name: Release ${{ github.ref }}
-          body: "Ryuusei Wallet release for ${{ matrix.os }}"
-          draft: false
-          prerelease: false
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    - uses: actions/checkout@v2
+    - name: Set up Node.js
+      uses: actions/setup-node@v2
+      with:
+        node-version: '16'
+    - run: npm install
+    - run: npm run build:mac
+    - run: npm run dist
+    - name: Upload artifact
+      uses: actions/upload-artifact@v2
+      with:
+        name: electron-app-mac
+        path: dist/
