@@ -17,10 +17,14 @@ jobs:
       - run: npm install
       - run: npm run build
       - run: npm run dist
-      - name: Upload artifact
+      - name: Upload specific artifacts
         uses: actions/upload-artifact@v3
         with:
-          name: electron-app-mac
-          path: dist/
+          name: electron-artifacts
+          path: |
+            dist/Ryuusei Wallet-1.0.0-arm64-mac.zip
+            dist/Ryuusei Wallet-1.0.0-arm64.dmg
+            dist/Ryuusei Wallet-1.0.0.AppImage
+            dist/Ryuusei_1.0.0_amd64.snap
     env:
-      GH_TOKEN: ${{ secrets.GH_TOKEN }} 
+      GH_TOKEN: ${{ secrets.GH_TOKEN }}
