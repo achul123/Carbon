@@ -9,16 +9,16 @@ jobs:
   build:
     runs-on: macos-latest
     steps:
-    - uses: actions/checkout@v2
-    - name: Set up Node.js
-      uses: actions/setup-node@v2
-      with:
-        node-version: '16'
-    - run: npm install
-    - run: npm run build:mac
-    - run: npm run dist
-    - name: Upload artifact
-      uses: actions/upload-artifact@v2
-      with:
-        name: electron-app-mac
-        path: dist/
+      - uses: actions/checkout@v2
+      - name: Set up Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: '16'
+      - run: npm install
+      - run: npm run build
+      - run: npm run dist
+      - name: Upload artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: electron-app-mac
+          path: dist/
