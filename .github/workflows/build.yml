@@ -55,7 +55,7 @@ jobs:
         with:
           node-version: '16'
       - run: npm install
-      - run: npm run build
+      - run: npm run build:win
       - run: npm run dist
       - name: Upload Windows artifacts
         uses: actions/upload-artifact@v3
