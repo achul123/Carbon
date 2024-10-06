@@ -20,11 +20,30 @@ jobs:
       - name: Upload specific artifacts
         uses: actions/upload-artifact@v3
         with:
-          name: electron-artifacts
+          name: Ryuusei-Wallet-arm64-mac # Un nom d'artefact pour l'identification
           path: |
             dist/Ryuusei Wallet-1.0.0-arm64-mac.zip
             dist/Ryuusei Wallet-1.0.0-arm64.dmg
             dist/Ryuusei Wallet-1.0.0.AppImage
             dist/Ryuusei_1.0.0_amd64.snap
+      - name: Upload files individually
+        uses: actions/upload-artifact@v3
+        with:
+          name: macos-files
+          path: |
+            dist/Ryuusei Wallet-1.0.0-arm64-mac.zip
+            dist/Ryuusei Wallet-1.0.0-arm64.dmg
+      - name: Upload Linux files
+        uses: actions/upload-artifact@v3
+        with:
+          name: linux-files
+          path: dist/Ryuusei Wallet-1.0.0.AppImage
+           
+      - name: Upload Snap file
+        uses: actions/upload-artifact@v3
+        with:
+          name: snap-file
+          path: dist/Ryuusei_1.0.0_amd64.snap
     env:
       GH_TOKEN: ${{ secrets.GH_TOKEN }}
+
