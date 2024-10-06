@@ -1,6 +1,12 @@
-name: Build/release
+name: Build/release Ryuusei Wallet
 
-on: push
+on: 
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
 
 jobs:
   release:
@@ -11,22 +17,59 @@ jobs:
         os: [macos-latest, windows-latest, ubuntu-latest]
 
     steps:
+      # Check out the repository
       - name: Check out Git repository
-        uses: actions/checkout@v1
+        uses: actions/checkout@v2
 
-      - name: Install Node.js, NPM and Yarn
-        uses: actions/setup-node@v1
+      # Clean node_modules to avoid potential permission issues
+      - name: Clean up node_modules
+        run: rm -rf node_modules
+
+      # Clean NPM cache
+      - name: Clean NPM cache
+        run: npm cache clean --force
+
+      # Set up Node.js environment
+      - name: Set up Node.js
+        uses: actions/setup-node@v2
         with:
           node-version: 18
 
-      - name: Install dependencies on Linux (for building Electron apps)
+      # Install dependencies
+      - name: Install dependencies
+        run: npm install
+
+      # Install dependencies for Linux
+      - name: Install Linux dependencies
         if: matrix.os == 'ubuntu-latest'
         run: |
           sudo apt-get update
           sudo apt-get install -y libgtkextra-dev libgconf2-dev libnss3 libasound2 libxtst-dev xauth xvfb
 
-      - name: Build/release Electron app
-        uses: samuelmeuli/action-electron-builder@v1
+      # Increase NPM timeout to prevent potential timeout issues
+      - name: Increase NPM timeout
+        run: npm config set fetch-retries 5
+
+      # Build Electron app for each platform
+      - name: Build Electron app
+        run: npm run build:${{ matrix.os == 'macos-latest' && 'mac' || matrix.os == 'windows-latest' && 'win' || 'linux' }}
+
+      # Upload artifacts for release
+      - name: Upload artifact
+        uses: actions/upload-artifact@v2
         with:
-          github_token: ${{ secrets.github_token }}
-          release: ${{ startsWith(github.ref, 'refs/tags/v') }}
+          name: Ryuusei-Wallet-${{ matrix.os }}
+          path: dist/
+
+      # Optionally publish the release when a tag is pushed
+      - name: Publish release
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: actions/create-release@v1
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: Release ${{ github.ref }}
+          body: "Ryuusei Wallet release for ${{ matrix.os }}"
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
