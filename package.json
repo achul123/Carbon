@@ -4,6 +4,7 @@
   "main": "app.js",
   "scripts": {
     "start": "npx electron .",
+    "dist": "electron-builder",
     "build": "electron-builder build --mac --win --linux",
     "build:mac": "electron-builder build --mac",
     "build:win": "electron-builder build --win",
